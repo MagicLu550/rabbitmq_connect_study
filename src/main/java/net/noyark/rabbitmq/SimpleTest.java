@@ -3,7 +3,7 @@ package net.noyark.rabbitmq;
 import com.rabbitmq.client.*;
 import org.junit.Test;
 
-import java.util.Queue;
+import java.io.IOException;
 
 public class SimpleTest {
 
@@ -12,14 +12,9 @@ public class SimpleTest {
      */
     @Test
     public void producter() throws Exception{
-        ConnectionFactory factory = new ConnectionFactory();
-        factory.setHost("localhost");
-        factory.setPort(5672);
-        factory.setUsername("noyark");
-        factory.setPassword("027859");
-        factory.setVirtualHost("noyark");//"/"不能缺
+        //"/"不能缺
         //获取连接 获取返回结果的快捷键trl + shift +l
-        Connection connection = factory.newConnection();
+        Connection connection = FacUtil.connect();
         //从一个连接可以获取多个信道channel
         //connection的连接，基于底层tcp,socket
         Channel chan = connection.createChannel();
@@ -50,14 +45,7 @@ public class SimpleTest {
      */
     @Test
     public void consumer() throws Exception{
-        ConnectionFactory factory = new ConnectionFactory();
-        factory.setHost("localhost");
-        factory.setPort(5672);
-        factory.setUsername("noyark");
-        factory.setPassword("027859");
-        factory.setVirtualHost("noyark");//"/"不能缺
-        //获取连接 获取返回结果的快捷键trl + shift +l
-        Connection connection = factory.newConnection();
+        Connection connection = FacUtil.connect();
         //从一个连接可以获取多个信道channel
         //connection的连接，基于底层tcp,socket
         Channel chan = connection.createChannel();
@@ -65,6 +53,16 @@ public class SimpleTest {
         String queue = "simple1000";
         chan.queueDeclare(queue,false,false,false,null);
         //创建一个消费者,将对象交给chan
+        chan.basicQos(1);
+        Consumer consumer = new DefaultConsumer(chan){
+            @Override
+            public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
+                String message = new String(body,"UTF-8");
+                System.out.println("customer 消费消息："+message);
+            }
+        };
+        chan.basicConsume("hello", true,consumer);
+        chan.basicConsume(queue,true,consumer);
         //QueueingConsumer consumer = new QueueingConsumer(chan);
         //消费消息，利用chan，绑定消费者和队列
         //autoAck:自动确认，true，确认，false，消费完消息后需要手动
@@ -77,6 +75,9 @@ public class SimpleTest {
             //Delivery dli =consumer.nextDelivery();
             //从dli获取消息，byte数组
             //String msg = new String(dli.getBody());
+            //chan.basicAck(delivery.getEnvelope().getDeliveryTag(),false);
         }
+
     }
+
 }
