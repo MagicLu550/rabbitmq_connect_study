@@ -49,7 +49,7 @@ public class PublishTest {
             }
         };
         while (true) {
-            channel.basicConsume("work", consumer);
+            channel.basicConsume("work1", consumer);
         }
     }
 }
